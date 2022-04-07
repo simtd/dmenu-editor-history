@@ -1,0 +1,188 @@
+#!/usr/bin/env bash
+
+# DMENU-EDITOR-HISTORY
+# --------------------
+
+# Bash script that provides an awesome editor indepentend history list of
+# opened files, via dmenu. See --help for details.
+
+# DEFAULT CONFIGURATION ---------------------------------------------------------
+
+cmd_editor=(subl)
+cmd_dmenu=(dmenu -p 'Hist' -i -l 20)
+cmd_find=(find "$HOME")
+
+indc_find='--- SEARCH ---'
+indc_dir='[DIR]'  # directories
+indc_link='[LNK]' # symbolic links
+
+# -------------------------------------------------------------------------------
+
+err() {
+    printf "ERROR: $1!\n" 1>&2
+    exit 1
+}
+
+help() {
+	read -d '' <<-EOF
+		MAIN USAGE:
+
+		--sel                - Select previously opened file or search for a new
+		                       (intended to be run via a custom hotkey)
+
+		--open               - Open a new file from the terminal
+		                       (intended to be run via a shell alias)
+
+		CHANGE BASIC PROGRAMS:
+		--editor="program"   - Text editor (now: '${cmd_editor[@]}')
+		--dmenu="program"    - dmenu command (now: '${cmd_dmenu[@]}')
+		--find="program"     - Command to search files (now: '${cmd_find[@]}')
+
+		OTHER:
+		-p, --purge          - Clear history
+		-c, --clean          - Remove files from history that doesn't exist
+		-h, --help           - Display this usage information
+	EOF
+    printf '%s' "$REPLY"
+}
+
+# File to store history in
+if [[ -d $XDG_CACHE_HOME ]]; then
+    hist="$XDG_CACHE_HOME/dmenu-editor-history"
+else
+    hist="$HOME/.dmenu-editor-history"
+fi
+[[ -f $hist ]] || touch "$hist"
+
+rm_old() {
+    # Remove non-existant files from history
+
+    while read -r; do
+        [[ -e "$REPLY" ]] && keep+=("$REPLY")
+    done < "$hist"
+
+    printf '%s\n' "${keep[@]}" > "$hist"
+}
+
+# Arguments
+while [[ -n $1 ]]; do
+    case $1 in
+        --help|-h)
+            help
+            exit 0 ;;
+
+        --purge|-p)
+            read -p "Delete $hist? [y/n]: " del
+            case "$del" in
+                y|Y|yes|Yes|YES) rm -v "$hist" ;;
+            esac
+            exit 0 ;;
+
+        --clean|-c)
+            rm_old
+            exit 0 ;;
+
+        --editor=*)
+            cmd_editor=(${1#*=})
+            shift ;;
+
+        --dmenu=*)
+            cmd_dmenu=(${1#*=})
+            shift ;;
+
+        --find=*)
+            cmd_find=(${1#*=})
+            shift ;;
+
+        --sel)
+            setting='select'
+            shift ;;
+
+        --open)
+            setting='open'
+            shift ;;
+
+        *)
+            err "Invalid option '$1', see --help for usage" ;;
+    esac
+done
+
+entry() {
+    # Insert new history entry
+    # $1 = absolute path to a file
+
+    newhist+=("$1")
+
+    # Previous history without duplicate of new entry
+    dup_found=0
+    while read -r; do
+        if ! ((dup_found)); then
+            if [[ $REPLY == "$1" ]]; then
+                dup_found=1
+                continue 2
+            fi
+        fi
+        newhist+=("$REPLY")
+    done < "$hist"
+
+    printf '%s\n' "${newhist[@]}" > "$hist"
+}
+
+case "$setting" in
+    select)
+        # Pipe file into dmenu with indicators
+        filename=$(printf '%s\n%s' "$indc_find" "$(
+            while read -r; do
+                if [[ -d $REPLY ]]; then
+                    printf "$indc_dir $REPLY\n"
+                elif [[ -L $REPLY ]]; then
+                    printf "$indc_link $REPLY\n"
+                else
+                    printf "$REPLY\n"
+                fi
+            done < "$hist"
+        )" | "${cmd_dmenu[@]}")
+
+        if [[ $filename == "$indc_find" ]]; then # searching
+            filename=$("${cmd_find[@]}" | "${cmd_dmenu[@]}")
+            [[ -z $filename ]] && err 'Empty selection'
+        else
+            [[ -z $filename ]] && err 'Empty selection'
+
+            # Remove potential indicators
+            filename=${filename#"$indc_dir "}
+            filename=${filename#"$indc_link "}
+
+            # If the file doesn't exist clean history and error out
+            if ! [[ -e $filename ]]; then
+                rm_old
+                err "$filename does not exist"
+            fi
+        fi
+
+        entry "$filename"
+
+        "${cmd_editor[@]}" "$filename" ;;
+
+    open)
+        # Find absolute path to specified file
+        case "$2" in
+            '')
+                "${cmd_editor[@]}"
+                exit ;;
+            .)
+                filename="$PWD" ;;
+            ..)
+                cwd="${PWD##*/}"
+                filename="${PWD%/"$cwd"}" ;;
+            *)
+                filename="$PWD/${2##*/}" ;;
+        esac
+
+        entry "$filename"
+
+        "${cmd_editor[@]}" "$filename" ;;
+
+    *)
+        err 'Needs option --sel or --open to do anything useful. See -h for help'
+esac
