@@ -8,9 +8,11 @@ The default editor is sublime text, but the text editor, dmenu command, and find
 
 There are two basic usages:
 
-1) `dmenu-editor-history --sel` - select a file or search for a new one via dmenu
-2) `dmenu-editor-history --open example.txt` - open a new file from the terminal
+1) `dmenu-editor-history --sel` - Select a file or search for a new one via dmenu. This command is intended to be run via a custom hotkey.
+2) `dmenu-editor-history --open example.txt` - Open a new file from the terminal. This command is intended to be run via a custom shell alias.
 
 ## Installation
 
-coming soon
+1) `git clone https://github.com/simtd/dmenu-editor-history.git`
+2) `cd dmenu-editor-history`
+3) `sudo ./install`
