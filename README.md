@@ -1,10 +1,12 @@
 # Supercharge your workflow
 
-<img src="https://github.com/simtd/dmenu-editor-history/blob/main/img.png" width="500" />
-
 'dmenu-editor-history' is a Bash script that provides an awesome editor indepentend history list of opened files. Also allows you to quickly search for files with find.
 
 The default editor is sublime text, but the text editor, dmenu command, and find command can be changed with command line flags. See --help for details.
+
+Shown below with a custom dmenu command:
+
+<img src="https://github.com/simtd/dmenu-editor-history/blob/main/img.png" width="500" />
 
 ## Usage
 
