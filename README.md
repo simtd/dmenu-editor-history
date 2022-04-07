@@ -1,6 +1,6 @@
 # Supercharge your workflow
 
-![Image](url "/dmenu-editor-history/img.png")
+![Image](https://github.com/simtd/dmenu-editor-history/blob/main/img.png)
 
 'dmenu-editor-history' is a Bash script that provides an awesome editor indepentend history list of opened files. Also allows you to quickly search for files with find.
 
