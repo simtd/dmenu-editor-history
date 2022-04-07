@@ -4,7 +4,7 @@
 
 The default editor is sublime text, but the text editor, dmenu command, and find command can be changed with command line flags. See --help for details.
 
-Shown below with a custom dmenu command:
+Shown below (with a custom dmenu command):
 
 <img src="https://github.com/simtd/dmenu-editor-history/blob/main/img.png" width="500" />
 
