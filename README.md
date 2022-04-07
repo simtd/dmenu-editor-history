@@ -13,7 +13,7 @@ Shown below (with a custom dmenu command):
 There are two basic usages:
 
 1) `dmenu-editor-history --sel` - Select a file or search for a new one via dmenu. This command is intended to be run via a custom hotkey.
-2) `dmenu-editor-history --open example.txt` - Open a new file from the terminal. This command is intended to be run via a custom shell alias.
+2) `dmenu-editor-history --open example.txt` - Open a new file from the terminal. This command is intended to be run via a custom shell alias and replaces the normal command you use to open files like `subl`, `vim`, `code`.
 
 ## Installation
 
