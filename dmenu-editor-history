@@ -100,8 +100,12 @@ while [[ -n $1 ]]; do
 
         --open)
             setting='open'
-            open_file="$2"
-            shift 2 ;;
+            if [[ -n $2 ]]; then
+                open_file="$2"
+                shift 2
+            else
+                shift
+            fi ;;
 
         *)
             err "Invalid option '$1', see --help for usage" ;;
@@ -167,7 +171,7 @@ case "$setting" in
 
     open)
         # Find absolute path to specified file
-        case "open_file" in
+        case "$open_file" in
             '')
                 "${cmd_editor[@]}"
                 exit ;;

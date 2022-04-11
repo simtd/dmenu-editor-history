@@ -10,5 +10,5 @@ fi
 case $1 in
     '') cp "./$script_name" "$install_dir" ;;
     uninstall) rm "$install_dir/$script_name" ;;
-    *) echo 'Invalid argument!' && exit 1
+    *) echo 'Invalid argument!' && exit 1 ;;
 esac
