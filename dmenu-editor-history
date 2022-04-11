@@ -31,6 +31,7 @@ help() {
 		                       (intended to be run via a custom hotkey)
 
 		--open               - Open a new file from the terminal
+		                       (needs to be the last argument)
 		                       (intended to be run via a shell alias)
 
 		CHANGE BASIC PROGRAMS:
