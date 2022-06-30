@@ -13,8 +13,8 @@ cmd_dmenu=(dmenu -p 'Hist' -i -l 20)
 cmd_find=(find "$HOME")
 
 indc_find='--- SEARCH ---'
-indc_dir='[DIR]'  # directories
-indc_link='[LNK]' # symbolic links
+indc_dir='[DIR]'  # Directories
+indc_link='[LNK]' # Symbolic links
 
 # -------------------------------------------------------------------------------
 
@@ -47,7 +47,7 @@ help() {
     printf '%s' "$REPLY"
 }
 
-# File to store history in
+# Cache file to store history in
 if [[ -d $XDG_CACHE_HOME ]]; then
     hist="$XDG_CACHE_HOME/dmenu-editor-history"
 else
@@ -114,7 +114,7 @@ while [[ -n $1 ]]; do
 done
 
 entry() {
-    # Insert new history entry
+    # Insert new history entry into cache file
     # $1 = absolute path to a file
 
     newhist+=("$1")
@@ -136,20 +136,27 @@ entry() {
 
 case "$setting" in
     select)
-        # Pipe file into dmenu with indicators
-        filename=$(printf '%s\n%s' "$indc_find" "$(
-            while read -r; do
-                if [[ -d $REPLY ]]; then
-                    printf "$indc_dir $REPLY\n"
-                elif [[ -L $REPLY ]]; then
-                    printf "$indc_link $REPLY\n"
-                else
-                    printf "$REPLY\n"
-                fi
-            done < "$hist"
-        )" | "${cmd_dmenu[@]}")
+        paths+=("$indc_find")
+        while read -r; do
+            if [[ -d $REPLY ]]; then
+                indc="$indc_dir "
+            elif [[ -L $REPLY ]]; then
+                indc="$indc_link "
+            else
+                indc=""
+            fi
 
-        if [[ $filename == "$indc_find" ]]; then # searching
+            # Remove home path in front
+            path="${REPLY/"$HOME/"/}"
+
+            paths+=("$indc${path:-"$HOME"}")
+        done < "$hist"
+
+        # Pipe into dmenu
+        filename=$(printf "%s\n" "${paths[@]}" | "${cmd_dmenu[@]}")
+
+
+        if [[ $filename == "$indc_find" ]]; then # Searching
             filename=$("${cmd_find[@]}" | "${cmd_dmenu[@]}")
             [[ -z $filename ]] && err 'Empty selection'
         else
@@ -158,6 +165,9 @@ case "$setting" in
             # Remove potential indicators
             filename=${filename#"$indc_dir "}
             filename=${filename#"$indc_link "}
+
+            # Add home back
+            [[ ${filename:0:1} == '/' ]] || filename="$HOME/$filename"
 
             # If the file doesn't exist clean history and error out
             if ! [[ -e $filename ]]; then
