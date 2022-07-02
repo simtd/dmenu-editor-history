@@ -6,30 +6,91 @@
 # Bash script that provides an awesome editor indepentend history list of
 # opened files, via dmenu. See --help for details.
 
-# DEFAULT CONFIGURATION ---------------------------------------------------------
+# CONFIG ------------------------------------------------------------------------
 
 cmd_editor=(subl)
 cmd_dmenu=(dmenu -p 'Hist' -i -l 20)
 cmd_find=(find "$HOME")
 
 indc_find='--- SEARCH ---'
-indc_dir='[DIR]'  # Directories
-indc_link='[LNK]' # Symbolic links
+indc_dir='[D]'  # Directories
+indc_link='[L]' # Symbolic links
+indc_home='[~]'
 
 # -------------------------------------------------------------------------------
 
+# HELPER FUNCTIONS --------------------------------------------------------------
+
 err() {
-    printf "ERROR: $1!\n" 1>&2
-    exit 1
+    # $1 = exit code
+    # $2 = error string
+
+    if [[ $1 != 0 ]]; then
+        printf "Error $0: $2!\n" 1>&2
+        exit $1
+    fi
 }
 
-help() {
-	read -d '' <<-EOF
-		MAIN USAGE:
+full_path() {
+    # Convert a relative path to an absolute path
+    # $1 examples:
+    #   * 'file'
+    #   * './file/'
+    #   * '/usr/etc/file'
+    #   * '/'
+    #   * '../../dirname'
+    #   * '/dirname/../dirname'
+    #   * 'file name with spaces'
 
+    # Stripping potential trailing forward slash
+    input="${1%/}"
+
+    case $input in
+        '') # Root
+            path='/' ;;
+
+        /..*) # Invalid
+            path='/' ;;
+
+        .) # Current dir
+            path="$PWD" ;;
+
+        ..) # Parent dir
+            cwd="${PWD##*/}"
+            path="${PWD%/"$cwd"}" ;;
+
+        */*) # Path
+            if [[ ${input:0:1} == '/' ]]; then
+                path=""
+                input="${input#/}"
+            else
+                path="$PWD"
+            fi
+
+            local IFS='/'
+            for chunk in $input; do
+                case $chunk in
+                    ..) # Remove the last dir from path
+                        path="${path%/*}" ;;
+                    *)
+                        path="$path/$chunk" ;;
+                esac
+            done ;;
+
+        *) # File in cwd
+            path="$PWD/${input##*/}" ;;
+    esac
+
+    printf '%s' "$path"
+}
+
+# -------------------------------------------------------------------------------
+
+help() {
+    read -d '' <<-EOF
+		MAIN USAGE:
 		--sel                - Select previously opened file or search for a new
 		                       (intended to be run via a custom hotkey)
-
 		--open               - Open a new file from the terminal
 		                       (needs to be the last argument)
 		                       (intended to be run via a shell alias)
@@ -47,7 +108,7 @@ help() {
     printf '%s' "$REPLY"
 }
 
-# Cache file to store history in
+# File to store history cache in
 if [[ -d $XDG_CACHE_HOME ]]; then
     hist="$XDG_CACHE_HOME/dmenu-editor-history"
 else
@@ -65,7 +126,7 @@ rm_old() {
     printf '%s\n' "${keep[@]}" > "$hist"
 }
 
-# Arguments
+# Argument parsing
 while [[ -n $1 ]]; do
     case $1 in
         --help|-h)
@@ -109,7 +170,7 @@ while [[ -n $1 ]]; do
             fi ;;
 
         *)
-            err "Invalid option '$1', see --help for usage" ;;
+            err 1 "invalid option '$1', see --help for usage" ;;
     esac
 done
 
@@ -136,69 +197,68 @@ entry() {
 
 case "$setting" in
     select)
-        paths+=("$indc_find")
+        display+=("$indc_find")
+        declare -A lookup
+
         while read -r; do
-            if [[ -d $REPLY ]]; then
-                indc="$indc_dir "
+            if [[ $REPLY == $HOME ]]; then
+                indc="$indc_home "
             elif [[ -L $REPLY ]]; then
                 indc="$indc_link "
+            elif [[ -d $REPLY ]]; then
+                indc="$indc_dir "
             else
                 indc=""
             fi
 
-            # Remove home path in front
-            path="${REPLY/"$HOME/"/}"
+            dir="${REPLY%/*}"       # Remove name
+            file="${REPLY#"$dir/"}" # Name
+            file="${file:-/}"       # Exeption for /
+            dir="${dir#"$HOME"}"    # Remove potential home prefix
 
-            paths+=("$indc${path:-"$HOME"}")
+            [[ $dir == '' ]] || dir=" (${dir#/})"
+
+            final="$indc$file$dir"
+
+            display+=("$final")
+            lookup+=("$final" "$REPLY")
         done < "$hist"
 
         # Pipe into dmenu
-        filename=$(printf "%s\n" "${paths[@]}" | "${cmd_dmenu[@]}")
+        selected="$(printf "%s\n" "${display[@]}" | "${cmd_dmenu[@]}")"
+        unset display
+        [[ -z $selected ]] && err 1 'empty selection'
 
-
-        if [[ $filename == "$indc_find" ]]; then # Searching
+        if [[ $selected == "$indc_find" ]]; then
             filename=$("${cmd_find[@]}" | "${cmd_dmenu[@]}")
-            [[ -z $filename ]] && err 'Empty selection'
+            [[ -z $filename ]] && err 1 'empty selection'
         else
-            [[ -z $filename ]] && err 'Empty selection'
+            filename="${lookup[$selected]}"
 
-            # Remove potential indicators
-            filename=${filename#"$indc_dir "}
-            filename=${filename#"$indc_link "}
-
-            # Add home back
-            [[ ${filename:0:1} == '/' ]] || filename="$HOME/$filename"
-
-            # If the file doesn't exist clean history and error out
+            # Testing if file has been deleted or not saved
             if ! [[ -e $filename ]]; then
                 rm_old
-                err "$filename does not exist"
+                err 1 "$filename does not exist"
             fi
         fi
 
-        entry "$filename"
+        unset lookup
 
+        entry "$filename"
         "${cmd_editor[@]}" "$filename" ;;
 
     open)
-        # Find absolute path to specified file
-        case "$open_file" in
-            '')
-                "${cmd_editor[@]}"
-                exit ;;
-            .)
-                filename="$PWD" ;;
-            ..)
-                cwd="${PWD##*/}"
-                filename="${PWD%/"$cwd"}" ;;
-            *)
-                filename="$PWD/${open_file##*/}" ;;
-        esac
+        # If file is empty
+        if [[ -z $open_file ]]; then
+            "${cmd_editor[@]}"
+            exit
+        fi
 
-        entry "$filename"
+        path="$(full_path $open_file)"
 
-        "${cmd_editor[@]}" "$filename" ;;
+        entry "$path"
+        "${cmd_editor[@]}" "$path" ;;
 
     *)
-        err 'Needs option --sel or --open to do anything useful. See -h for help'
+        err 1 'needs option --sel or --open to do anything. See -h for help'
 esac
