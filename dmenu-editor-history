@@ -6,6 +6,8 @@
 # Bash script that provides an awesome editor indepentend history list of
 # opened files, via dmenu. See --help for details.
 
+version='2.0.0'
+
 # CONFIG ------------------------------------------------------------------------
 
 # Default commands
@@ -135,6 +137,10 @@ rm_old() {
 # Argument parsing
 while [[ -n $1 ]]; do
     case $1 in
+        --version|-v)
+            printf "$version\n"
+            exit 0 ;;
+
         --help|-h)
             help
             exit 0 ;;

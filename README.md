@@ -24,3 +24,10 @@ There are two basic usages:
 ### Uninstall
 
 `sudo ./install uninstall`
+
+## Version log
+
+#### 2.0
+
+- File paths are displayed differently in dmenu
+- Major bug fixes related to opening paths from the terminal
