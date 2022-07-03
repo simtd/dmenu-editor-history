@@ -108,6 +108,7 @@ help() {
 		-p, --purge          - Clear history
 		-c, --clean          - Remove files from history that doesn't exist
 		-h, --help           - Display this usage information
+		-v, --version        - Display version number
 	EOF
     printf '%s' "$REPLY"
 }
