@@ -123,7 +123,11 @@ rm_old() {
         [[ -e "$REPLY" ]] && keep+=("$REPLY")
     done < "$hist"
 
-    printf '%s\n' "${keep[@]}" > "$hist"
+    if [[ ${#keep[@]} -gt 0 ]]; then
+        printf '%s\n' "${keep[@]}" > "$hist"
+    else
+        > "$hist"
+    fi
 }
 
 # Argument parsing
@@ -254,7 +258,7 @@ case "$setting" in
             exit
         fi
 
-        path="$(full_path $open_file)"
+        path="$(full_path "$open_file")"
 
         entry "$path"
         "${cmd_editor[@]}" "$path" ;;
