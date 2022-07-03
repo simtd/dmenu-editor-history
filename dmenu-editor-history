@@ -8,14 +8,16 @@
 
 # CONFIG ------------------------------------------------------------------------
 
+# Default commands
 cmd_editor=(subl)
 cmd_dmenu=(dmenu -p 'Hist' -i -l 20)
 cmd_find=(find "$HOME")
 
-indc_find='--- SEARCH ---'
-indc_dir='[D]'  # Directories
-indc_link='[L]' # Symbolic links
-indc_home='[~]'
+# Indicators
+indc_find='--- SEARCH ---' # To enter find mode
+indc_dir='[D]'             # Directories
+indc_link='[L]'            # Symbolic links
+indc_home='[~]'            # Home directory
 
 # -------------------------------------------------------------------------------
 
@@ -230,8 +232,8 @@ case "$setting" in
 
         # Pipe into dmenu
         selected="$(printf "%s\n" "${display[@]}" | "${cmd_dmenu[@]}")"
-        unset display
         [[ -z $selected ]] && err 1 'empty selection'
+        unset display
 
         if [[ $selected == "$indc_find" ]]; then
             filename=$("${cmd_find[@]}" | "${cmd_dmenu[@]}")
