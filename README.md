@@ -17,7 +17,9 @@ There are two basic usages:
 
 ## dmenu tip
 
-It takes a while for find to parse the home directory. Therefore it it advantageous to use a dmenu alternative (like rofi or fzf) that doesn't block standard in. This makes it so you don't have to wait on the find command to complete before you can start to type. There are also patches for dmenu which can solve this "issue".
+It takes a while for find to parse the home directory. Therefore it it advantageous to use a dmenu alternative (like rofi or fzf) that doesn't block standard in. This makes it so you don't have to wait on the find command to complete before you can start to type. There are also patches for dmenu which can solve this "issue". Also, fuzzy matching is useful when dealing with multiple larger file paths.
+
+* Rofi example command: `dmenu-editor-history --dmenu="rofi -dmenu -i -matching fuzzy -p Hist" --sel`
 
 ## Installation
 
