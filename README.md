@@ -17,9 +17,9 @@ There are two basic usages:
 
 ## dmenu tip
 
-It takes a while for find to parse the home directory. Therefore it it advantageous to use a dmenu alternative (like rofi or fzf) that doesn't block standard in. This makes it so you don't have to wait on the find command to complete before you can start to type. There are also patches for dmenu which can solve this "issue". Also, fuzzy matching is useful when dealing with multiple larger file paths.
+It takes a while for `find` to parse the home directory. Therefore it it advantageous to use a dmenu alternative (like `rofi` or `fzf`) that doesn't block standard in. This makes it so you don't have to wait on the `find` command to complete before you can start to type. There are also patches for `dmenu` which can solve this "issue". Also, using `rofi` you can also take advantage of the `dmenu-editor-history` `--pango` option which formats the text a little bit nicer (requires `-markup-rows`).
 
-* Rofi example command: `dmenu-editor-history --dmenu="rofi -dmenu -i -matching fuzzy -p Hist" --sel`
+* Recommended `rofi` command: `dmenu-editor-history --pango --dmenu="rofi -dmenu -markup-rows -i -matching fuzzy -p Hist" --sel`
 
 ## Installation
 
@@ -32,6 +32,10 @@ It takes a while for find to parse the home directory. Therefore it it advantage
 `sudo ./install uninstall`
 
 ## Version log
+
+#### 2.1
+
+- Added pango formatting support
 
 #### 2.0
 

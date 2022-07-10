@@ -6,7 +6,7 @@
 # Bash script that provides an awesome editor indepentend history list of
 # opened files, via dmenu. See --help for details.
 
-version='2.0.0'
+version='2.1.0'
 
 # CONFIG ------------------------------------------------------------------------
 
@@ -16,10 +16,17 @@ cmd_dmenu=(dmenu -p 'Hist' -i -l 20)
 cmd_find=(find "$HOME")
 
 # Indicators
-indc_find='--- SEARCH ---' # To enter find mode
-indc_dir='[D]'             # Directories
-indc_link='[L]'            # Symbolic links
-indc_home='[~]'            # Home directory
+indc_dir='[D]'  # Directories
+indc_link='[L]' # Symbolic links
+indc_home='[~]' # Home directory
+
+# Various
+row_find='--- SEARCH ---' # Select this row to enter find mode
+fmt_dir='(%s)'            # Diectory path format
+
+# Pango
+pango_fmt_dir="(<span weight='light' size='small'><i>%s</i></span>)"
+pango_indc_wrap="<span weight='bold'>%s</span>"
 
 # -------------------------------------------------------------------------------
 
@@ -109,6 +116,8 @@ help() {
 		-c, --clean          - Remove files from history that doesn't exist
 		-h, --help           - Display this usage information
 		-v, --version        - Display version number
+		--pango              - Enable pango formatting
+		                       (for example used with rofi -markup-rows)
 	EOF
     printf '%s' "$REPLY"
 }
@@ -182,6 +191,13 @@ while [[ -n $1 ]]; do
                 shift
             fi ;;
 
+        --pango)
+            fmt_dir="$pango_fmt_dir"
+            indc_dir="${pango_indc_wrap/\%s/$indc_dir}"
+            indc_home="${pango_indc_wrap/\%s/$indc_home}"
+            indc_link="${pango_indc_wrap/\%s/$indc_link}"
+            shift ;;
+
         *)
             err 1 "invalid option '$1', see --help for usage" ;;
     esac
@@ -210,7 +226,7 @@ entry() {
 
 case "$setting" in
     select)
-        display+=("$indc_find")
+        display+=("$row_find")
         declare -A lookup
 
         while read -r; do
@@ -228,8 +244,9 @@ case "$setting" in
             file="${REPLY#"$dir/"}" # Name
             file="${file:-/}"       # Exeption for /
             dir="${dir#"$HOME"}"    # Remove potential home prefix
+            dir="${dir#/}"          # Remove potential /
 
-            [[ $dir == '' ]] || dir=" (${dir#/})"
+            [[ $dir != '' ]] && dir=" ${fmt_dir/\%s/$dir}"
 
             final="$indc$file$dir"
 
@@ -242,7 +259,7 @@ case "$setting" in
         [[ -z $selected ]] && err 1 'empty selection'
         unset display
 
-        if [[ $selected == "$indc_find" ]]; then
+        if [[ $selected == "$row_find" ]]; then
             filename=$("${cmd_find[@]}" | "${cmd_dmenu[@]}")
             [[ -z $filename ]] && err 1 'empty selection'
         else
