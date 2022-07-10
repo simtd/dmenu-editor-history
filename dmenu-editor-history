@@ -25,7 +25,7 @@ row_find='--- SEARCH ---' # Select this row to enter find mode
 fmt_dir='(%s)'            # Diectory path format
 
 # Pango
-pango_fmt_dir="(<span weight='light' size='small'><i>%s</i></span>)"
+pango_fmt_dir="<span weight='light' size='small'><i>(%s)</i></span>"
 pango_indc_wrap="<span weight='bold'>%s</span>"
 
 # -------------------------------------------------------------------------------
