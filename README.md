@@ -19,7 +19,7 @@ There are two basic usages:
 
 It takes a while for `find` to parse the home directory. Therefore it it advantageous to use a dmenu alternative (like `rofi` or `fzf`) that doesn't block standard in. This makes it so you don't have to wait on the `find` command to complete before you can start to type. There are also patches for `dmenu` which can solve this "issue". Also, using `rofi` you can also take advantage of the `dmenu-editor-history` `--pango` option which formats the text a little bit nicer (requires `-markup-rows`).
 
-* Recommended `rofi` command: `dmenu-editor-history --pango --dmenu="rofi -dmenu -markup-rows -i -matching fuzzy -p Hist" --sel`
+* Recommended `rofi` command: `dmenu-editor-history --pango --dmenu="rofi -dmenu -markup-rows -i -p Hist" --sel`
 
 ## Installation
 
